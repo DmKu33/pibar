@@ -1,0 +1,5 @@
+flask>=3.0
+flask-cors>=4.0
+# Pi-only (uncomment when deploying):
+# adafruit-circuitpython-bme680
+# adafruit-circuitpython-scd4x
