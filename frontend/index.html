@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>pibar</title>
+<style>
+  /* ── Reset & base ──────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d14;
+    --card:    #14141f;
+    --border:  #1e1e2e;
+    --accent:  #45cc94;
+    --blue:    #6199ff;
+    --warn:    #ffb84d;
+    --danger:  #ff5f5f;
+    --white:   #e8e8f0;
+    --dim:     #7070a0;
+    --dim2:    #4a4a6a;
+    --font:    'Inter', 'SF Pro Display', system-ui, sans-serif;
+  }
+
+  html, body {
+    width: 1280px;
+    height: 480px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout: 5 columns ─────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: 148px 196px 196px 1fr 168px;
+    gap: 6px;
+    padding: 8px;
+    height: 100%;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 6px;
+  }
+
+  .big {
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .mid {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .sub {
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  /* ── Col 0: Clock ──────────────────────────────────────── */
+  #col-clock .time {
+    color: var(--white);
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #col-clock .date {
+    font-size: 12px;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+
+  #col-clock .bar {
+    width: 28px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin: 8px 0;
+  }
+
+  #col-clock .location {
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  #col-clock .uptime {
+    font-size: 9px;
+    color: var(--dim2);
+    margin-top: auto;
+  }
+
+  /* ── Col 1: Air Quality ────────────────────────────────── */
+  #col-aqi .aqi-value { color: var(--accent); }
+
+  #col-aqi .aqi-status {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+
+  #col-aqi .chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 64px;
+    margin-top: auto;
+    padding-top: 10px;
+  }
+
+  #col-aqi .chart .bar-item {
+    flex: 1;
+    background: rgba(69,204,148,0.25);
+    border-radius: 3px 3px 0 0;
+    transition: height 0.8s ease;
+  }
+
+  #col-aqi .chart .bar-item.current {
+    background: var(--accent);
+  }
+
+  #col-aqi .pm25 {
+    font-size: 9px;
+    color: var(--dim);
+    margin-top: 6px;
+  }
+
+  /* ── Col 2: CO2 + Temp ─────────────────────────────────── */
+  #col-env .co2-value { color: var(--blue); }
+
+  #col-env .temp-value {
+    color: var(--white);
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  /* ── Col 3: Tasks ──────────────────────────────────────── */
+  #col-tasks .task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+
+  #col-tasks .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #col-tasks .task-item:last-child { border-bottom: none; }
+
+  #col-tasks .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  #col-tasks .task-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--white);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #col-tasks .task-due {
+    font-size: 9px;
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .urgency-today   { color: var(--warn); }
+  .urgency-overdue { color: var(--danger); }
+  .urgency-soon    { color: var(--blue); }
+  .urgency-normal  { color: var(--dim); }
+
+  /* ── Col 4: System ─────────────────────────────────────── */
+  #col-sys .img-zone {
+    width: 100%;
+    height: 112px;
+    background: linear-gradient(135deg, #0e1e30 0%, #0a1220 100%);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dim2);
+    font-size: 9px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+
+  #col-sys .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 9px;
+  }
+
+  #col-sys .stat-key { color: var(--dim); }
+  #col-sys .stat-val { color: var(--white); font-weight: 500; }
+  #col-sys .stat-val.ok { color: var(--accent); }
+  #col-sys .stat-val.warn { color: var(--warn); }
+
+  /* ── Misc ──────────────────────────────────────────────── */
+  .fade { opacity: 0; transition: opacity 0.4s; }
+  .fade.visible { opacity: 1; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .blink { animation: pulse 1s step-end infinite; }
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <!-- ── Col 0: Clock ── -->
+  <div class="card" id="col-clock">
+    <div class="label">pibar</div>
+    <div class="big time" id="clock-time">--:--</div>
+    <div class="date" id="clock-date">—</div>
+    <div class="bar"></div>
+    <div class="location" id="clock-loc">Lab · Floor 2</div>
+    <div class="uptime" id="clock-uptime"></div>
+  </div>
+
+  <!-- ── Col 1: Air Quality ── -->
+  <div class="card" id="col-aqi">
+    <div class="label">Air Quality</div>
+    <div class="big aqi-value" id="aqi-val">—</div>
+    <div class="aqi-status" id="aqi-status">—</div>
+    <div class="chart" id="aqi-chart">
+      <!-- bars injected by JS -->
+    </div>
+    <div class="pm25 sub" id="aqi-pm25">PM2.5  — µg/m³ &nbsp;·&nbsp; VOC  —</div>
+  </div>
+
+  <!-- ── Col 2: CO2 + Temp/Humidity ── -->
+  <div class="card" id="col-env">
+    <div class="label">CO₂</div>
+    <div class="big co2-value" id="co2-val">—</div>
+    <div class="sub" id="co2-sub">— ppm</div>
+    <div class="divider"></div>
+    <div class="label">Temp / Humidity</div>
+    <div class="temp-value" id="temp-val">—°C</div>
+    <div class="sub" id="hum-val">Humidity —%</div>
+    <div class="sub" id="press-val">Pressure — hPa</div>
+  </div>
+
+  <!-- ── Col 3: Tasks ── -->
+  <div class="card" id="col-tasks">
+    <div class="label">Tasks &amp; Deadlines</div>
+    <ul class="task-list" id="task-list">
+      <li style="color:var(--dim);font-size:11px;padding-top:8px">Loading…</li>
+    </ul>
+  </div>
+
+  <!-- ── Col 4: System / Ambient ── -->
+  <div class="card" id="col-sys">
+    <div class="img-zone" id="sys-img">[ ambient ]</div>
+    <div class="stat-row">
+      <span class="stat-key">Network</span>
+      <span class="stat-val ok" id="sys-net">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-key">Pi temp</span>
+      <span class="stat-val" id="sys-temp">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-key">Disk free</span>
+      <span class="stat-val" id="sys-disk">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-key">Uptime</span>
+      <span class="stat-val" id="sys-uptime">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-key">IP</span>
+      <span class="stat-val" id="sys-ip">—</span>
+    </div>
+    <div class="divider"></div>
+    <div class="stat-row">
+      <span class="stat-key" style="font-size:8px;color:var(--dim2)" id="sys-updated">—</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://localhost:5000/api';
+  const POLL_MS = 6000;
+
+  // ── Clock ────────────────────────────────────────────────
+  const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function tickClock() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('clock-time').textContent = `${hh}:${mm}`;
+    document.getElementById('clock-date').textContent =
+      `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ── AQI helpers ──────────────────────────────────────────
+  const AQI_LEVELS = [
+    { max: 50,  label: 'Good',       color: '#45cc94' },
+    { max: 100, label: 'Moderate',   color: '#ffb84d' },
+    { max: 150, label: 'Unhealthy*', color: '#ff8c4b' },
+    { max: 200, label: 'Unhealthy',  color: '#ff5f5f' },
+    { max: 300, label: 'Very Unhlth',color: '#c04fff' },
+    { max: Infinity, label: 'Hazardous', color: '#8b0000' },
+  ];
+
+  function aqiLevel(v) {
+    return AQI_LEVELS.find(l => v <= l.max) || AQI_LEVELS.at(-1);
+  }
+
+  // Simulate a rolling 8-point history for the sparkbar
+  const aqiHistory = [38, 41, 35, 44, 40, 37, 43, 42];
+
+  function renderAqiChart(current) {
+    aqiHistory.push(current);
+    if (aqiHistory.length > 8) aqiHistory.shift();
+    const max = Math.max(...aqiHistory, 10);
+    const container = document.getElementById('aqi-chart');
+    container.innerHTML = aqiHistory.map((v, i) => {
+      const pct = Math.max(8, Math.round((v / max) * 100));
+      const isCurrent = i === aqiHistory.length - 1;
+      return `<div class="bar-item${isCurrent ? ' current' : ''}" style="height:${pct}%"></div>`;
+    }).join('');
+  }
+
+  // CO2 status label
+  function co2Status(v) {
+    if (v < 800)  return { label: 'Normal', color: 'var(--accent)' };
+    if (v < 1000) return { label: 'Elevated', color: 'var(--warn)' };
+    return { label: 'High — ventilate!', color: 'var(--danger)' };
+  }
+
+  // ── Update sensors ───────────────────────────────────────
+  function updateSensors(s) {
+    // AQI
+    const aqi = s.aqi ?? 42;
+    const lvl = aqiLevel(aqi);
+    const aqiEl = document.getElementById('aqi-val');
+    aqiEl.textContent = aqi;
+    aqiEl.style.color = lvl.color;
+    const aqiSt = document.getElementById('aqi-status');
+    aqiSt.textContent = lvl.label;
+    aqiSt.style.color = lvl.color;
+    renderAqiChart(aqi);
+
+    document.getElementById('aqi-pm25').innerHTML =
+      `PM2.5&nbsp;&nbsp;${s.pm25 ?? '—'} µg/m³ &nbsp;·&nbsp; VOC&nbsp;&nbsp;${s.voc_index ? (s.voc_index < 150 ? 'Low' : 'Medium') : '—'}`;
+
+    // CO2
+    const co2 = s.co2 ?? 748;
+    const cst = co2Status(co2);
+    const co2El = document.getElementById('co2-val');
+    co2El.textContent = co2;
+    co2El.style.color = cst.color;
+    document.getElementById('co2-sub').textContent = `${cst.label}  ·  ppm`;
+
+    // Temp / humidity
+    document.getElementById('temp-val').textContent = `${s.temperature ?? '—'}°C`;
+    document.getElementById('hum-val').textContent = `Humidity  ${s.humidity ?? '—'}%`;
+    document.getElementById('press-val').textContent = `Pressure  ${s.pressure ?? '—'} hPa`;
+  }
+
+  // ── Update system ────────────────────────────────────────
+  function updateSystem(sys) {
+    document.getElementById('sys-net').textContent   = sys.connected ? 'Connected' : 'Offline';
+    document.getElementById('sys-net').className     = 'stat-val ' + (sys.connected ? 'ok' : 'warn');
+    document.getElementById('sys-ip').textContent    = sys.ip ?? '—';
+    document.getElementById('sys-disk').textContent  = `${sys.disk_free_gb ?? '—'} GB`;
+    document.getElementById('sys-uptime').textContent = sys.uptime ?? '—';
+    document.getElementById('clock-uptime').textContent = `Uptime  ${sys.uptime ?? '—'}`;
+
+    const t = sys.cpu_temp;
+    const tempEl = document.getElementById('sys-temp');
+    if (t !== null && t !== undefined) {
+      tempEl.textContent = `${t}°C`;
+      tempEl.className = 'stat-val ' + (t > 70 ? 'warn' : '');
+    } else {
+      tempEl.textContent = '—';
+    }
+  }
+
+  // ── Update tasks ─────────────────────────────────────────
+  const URGENCY_COLORS = {
+    today:   'var(--warn)',
+    overdue: 'var(--danger)',
+    soon:    'var(--blue)',
+    normal:  'var(--dim)',
+  };
+
+  function updateTasks(tasks) {
+    const list = document.getElementById('task-list');
+    if (!tasks || tasks.length === 0) {
+      list.innerHTML = '<li style="color:var(--dim);font-size:11px;padding-top:8px">No tasks</li>';
+      return;
+    }
+    // Show max 7 tasks to fit 480px height
+    list.innerHTML = tasks.slice(0, 7).map(t => {
+      const color = URGENCY_COLORS[t.urgency] ?? 'var(--dim)';
+      const textStyle = t.done ? 'text-decoration:line-through;opacity:0.45' : '';
+      return `
+        <li class="task-item">
+          <div class="dot" style="background:${color}"></div>
+          <span class="task-text" style="${textStyle}">${escHtml(t.text)}</span>
+          <span class="task-due urgency-${t.urgency}">${escHtml(t.due ?? '')}</span>
+        </li>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Main poll ────────────────────────────────────────────
+  async function poll() {
+    try {
+      const res = await fetch(`${API}/all`);
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      updateSensors(data.sensors);
+      updateSystem(data.system);
+      updateTasks(data.tasks);
+      const now = new Date();
+      document.getElementById('sys-updated').textContent =
+        `Last sync  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    } catch (e) {
+      document.getElementById('sys-updated').textContent = `Error: ${e.message}`;
+    }
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+</script>
+</body>
+</html>
