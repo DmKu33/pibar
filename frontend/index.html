@@ -2,482 +2,825 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1280">
+<meta name="viewport" content="width=1280, initial-scale=1.0">
 <title>pibar</title>
 <style>
-  /* ── Reset & base ──────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
   :root {
-    --bg:      #0d0d14;
-    --card:    #14141f;
-    --border:  #1e1e2e;
-    --accent:  #45cc94;
-    --blue:    #6199ff;
-    --warn:    #ffb84d;
-    --danger:  #ff5f5f;
-    --white:   #e8e8f0;
-    --dim:     #7070a0;
-    --dim2:    #4a4a6a;
-    --font:    'Inter', 'SF Pro Display', system-ui, sans-serif;
+    --page: #090909;
+    --panel-shadow: 0 10px 34px rgba(0, 0, 0, 0.28);
+    --font-ui: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+    --font-display: "SF Mono", "JetBrains Mono", "Menlo", "Monaco", monospace;
   }
 
   html, body {
     width: 1280px;
     height: 480px;
     overflow: hidden;
-    background: var(--bg);
-    color: var(--white);
-    font-family: var(--font);
-    font-size: 13px;
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 26%),
+      radial-gradient(circle at bottom right, rgba(233, 225, 211, 0.08), transparent 28%),
+      linear-gradient(180deg, #0c0c0b 0%, #070707 100%);
+    color: #f3efe8;
+    font-family: var(--font-ui);
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Layout: 5 columns ─────────────────────────────────── */
   .grid {
     display: grid;
-    grid-template-columns: 148px 196px 196px 1fr 168px;
-    gap: 6px;
-    padding: 8px;
+    grid-template-columns: 220px 200px 380px 412px;
+    gap: 8px;
+    padding: 10px;
     height: 100%;
   }
 
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 14px 12px;
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-width: 0;
+    padding: 16px 16px 14px;
+    border-radius: 18px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--panel-fg);
+    box-shadow: var(--panel-shadow);
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top right, var(--panel-glow), transparent 30%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%);
+    pointer-events: none;
+  }
+
+  .tone-home {
+    --panel-bg: linear-gradient(180deg, #12110f 0%, #0f0e0d 100%);
+    --panel-border: rgba(214, 201, 180, 0.14);
+    --panel-fg: #f3efe8;
+    --panel-muted: #aea394;
+    --panel-accent: #ddcfbc;
+    --panel-accent-soft: rgba(221, 207, 188, 0.16);
+    --panel-glow: rgba(229, 217, 197, 0.12);
+  }
+
+  .tone-air {
+    --panel-bg: linear-gradient(180deg, #161617 0%, #111113 100%);
+    --panel-border: rgba(198, 203, 208, 0.12);
+    --panel-fg: #f1eeea;
+    --panel-muted: #9fa3a8;
+    --panel-accent: #d8d3ca;
+    --panel-accent-soft: rgba(216, 211, 202, 0.16);
+    --panel-glow: rgba(199, 205, 214, 0.12);
+  }
+
+  .tone-notes {
+    --panel-bg: linear-gradient(180deg, #151311 0%, #100e0d 100%);
+    --panel-border: rgba(223, 208, 186, 0.14);
+    --panel-fg: #f2ede6;
+    --panel-muted: #b0a494;
+    --panel-accent: #dfcfbb;
+    --panel-accent-soft: rgba(223, 207, 187, 0.12);
+    --panel-glow: rgba(223, 207, 187, 0.12);
+  }
+
+  .tone-media {
+    --panel-bg: linear-gradient(180deg, #111110 0%, #0d0d0c 100%);
+    --panel-border: rgba(232, 223, 209, 0.12);
+    --panel-fg: #f3efe8;
+    --panel-muted: #a39a8d;
+    --panel-accent: #e6dccd;
+    --panel-accent-soft: rgba(230, 220, 205, 0.12);
+    --panel-glow: rgba(230, 220, 205, 0.13);
+  }
+
+  .panel-head {
     position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
-  .label {
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+  .panel-kicker {
+    font: 700 10px/1 var(--font-display);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--dim);
-    margin-bottom: 6px;
+    color: var(--panel-muted);
   }
 
-  .big {
-    font-size: 46px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-
-  .mid {
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .sub {
+  .panel-tag {
+    border-radius: 999px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-accent-soft);
+    padding: 5px 8px;
     font-size: 10px;
-    color: var(--dim);
-    margin-top: 4px;
+    letter-spacing: 0.06em;
+    color: var(--panel-muted);
+    white-space: nowrap;
   }
 
-  .divider {
-    width: 100%;
-    height: 1px;
-    background: var(--border);
-    margin: 10px 0;
+  .playful {
+    font-family: var(--font-ui);
+    letter-spacing: 0.02em;
+    color: var(--panel-muted);
   }
 
-  /* ── Col 0: Clock ──────────────────────────────────────── */
-  #col-clock .time {
-    color: var(--white);
-    margin-top: 8px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  #col-clock .date {
-    font-size: 12px;
-    color: var(--dim);
-    margin-top: 6px;
-  }
-
-  #col-clock .bar {
-    width: 28px;
-    height: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    margin: 8px 0;
-  }
-
-  #col-clock .location {
-    font-size: 10px;
-    color: var(--dim);
-  }
-
-  #col-clock .uptime {
-    font-size: 9px;
-    color: var(--dim2);
-    margin-top: auto;
-  }
-
-  /* ── Col 1: Air Quality ────────────────────────────────── */
-  #col-aqi .aqi-value { color: var(--accent); }
-
-  #col-aqi .aqi-status {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent);
+  .time {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-display);
+    font-size: 54px;
+    line-height: 0.92;
+    letter-spacing: -0.06em;
+    color: var(--panel-accent);
     margin-top: 2px;
   }
 
-  #col-aqi .chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 4px;
-    height: 64px;
-    margin-top: auto;
-    padding-top: 10px;
+  .date {
+    position: relative;
+    z-index: 1;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--panel-muted);
   }
 
-  #col-aqi .chart .bar-item {
+  .meta-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--panel-muted);
+  }
+
+  .mini-divider,
+  .soft-divider {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 1px;
+    background: var(--panel-border);
+  }
+
+  .mini-divider {
+    margin: 14px 0 12px;
+  }
+
+  .soft-divider {
+    margin: 14px 0;
+  }
+
+  .section-title {
+    position: relative;
+    z-index: 1;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--panel-fg);
+  }
+
+  .badge {
+    position: relative;
+    z-index: 1;
+    border-radius: 999px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-accent-soft);
+    padding: 5px 8px;
+    font: 700 10px/1 var(--font-display);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--panel-accent);
+  }
+
+  .aqi-block {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+  }
+
+  .aqi-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 78px;
+    gap: 12px;
+    align-items: end;
+    margin-top: 12px;
+  }
+
+  .aqi-value {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+    color: var(--panel-accent);
+  }
+
+  .aqi-caption {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--panel-muted);
+  }
+
+  .chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 74px;
+  }
+
+  .chart .bar-item {
     flex: 1;
-    background: rgba(69,204,148,0.25);
-    border-radius: 3px 3px 0 0;
+    border-radius: 999px 999px 3px 3px;
+    background: var(--panel-accent-soft);
     transition: height 0.8s ease;
   }
 
-  #col-aqi .chart .bar-item.current {
-    background: var(--accent);
+  .chart .bar-item.current {
+    background: var(--panel-accent);
   }
 
-  #col-aqi .pm25 {
-    font-size: 9px;
-    color: var(--dim);
-    margin-top: 6px;
+  .metric-label {
+    position: relative;
+    z-index: 1;
+    font: 700 10px/1 var(--font-display);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--panel-muted);
   }
 
-  /* ── Col 2: CO2 + Temp ─────────────────────────────────── */
-  #col-env .co2-value { color: var(--blue); }
-
-  #col-env .temp-value {
-    color: var(--white);
-    font-size: 26px;
+  .co2-value {
+    position: relative;
+    z-index: 1;
+    margin-top: 12px;
+    font-size: 56px;
+    line-height: 0.9;
     font-weight: 700;
-    margin-top: 4px;
+    letter-spacing: -0.05em;
+    color: var(--panel-accent);
   }
 
-  /* ── Col 3: Tasks ──────────────────────────────────────── */
-  #col-tasks .task-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin-top: 4px;
+  .metric-meta {
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--panel-muted);
+  }
+
+  .temp-value {
+    position: relative;
+    z-index: 1;
+    margin-top: 10px;
+    font-size: 32px;
+    line-height: 0.95;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-task {
+    position: relative;
+    z-index: 1;
+    border-radius: 18px;
+    border: 1px solid var(--panel-border);
+    background:
+      linear-gradient(180deg, rgba(223, 207, 187, 0.09), rgba(223, 207, 187, 0.05)),
+      rgba(255, 255, 255, 0.02);
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .hero-kicker {
+    font: 700 11px/1 var(--font-display);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--panel-muted);
+  }
+
+  .hero-text {
+    margin-top: 10px;
+    font-size: 26px;
+    line-height: 1.06;
+    letter-spacing: -0.04em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  #col-tasks .task-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--border);
+  .hero-meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--panel-muted);
   }
 
-  #col-tasks .task-item:last-child { border-bottom: none; }
+  .task-list {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    list-style: none;
+    overflow: hidden;
+  }
 
-  #col-tasks .dot {
-    width: 7px;
-    height: 7px;
+  .task-item {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .task-item:last-child {
+    border-bottom: none;
+  }
+
+  .task-dot {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     margin-top: 4px;
-    flex-shrink: 0;
+    background: #7c7267;
+    box-shadow: 0 0 0 4px rgba(223, 207, 187, 0.12);
   }
 
-  #col-tasks .task-text {
+  .task-copy {
+    min-width: 0;
+  }
+
+  .task-text {
+    font-size: 14px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .task-meta {
+    margin-top: 4px;
     font-size: 11px;
-    font-weight: 500;
-    color: var(--white);
+    color: var(--panel-muted);
+  }
+
+  .task-due {
+    border-radius: 999px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-accent-soft);
+    padding: 5px 8px;
+    font: 700 10px/1 var(--font-display);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--panel-accent);
+  }
+
+  .media-frame {
+    position: relative;
+    z-index: 1;
     flex: 1;
+    min-height: 0;
+    border-radius: 22px;
+    border: 1px solid rgba(232, 223, 209, 0.12);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent 40%),
+      linear-gradient(145deg, #1d1b19 0%, #121211 42%, #0b0b0a 100%);
+    overflow: hidden;
+  }
+
+  .media-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(229, 220, 206, 0.22), transparent 24%),
+      radial-gradient(circle at 75% 28%, rgba(255, 255, 255, 0.09), transparent 20%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 36%);
+  }
+
+  .media-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 100% 24px;
+    opacity: 0.35;
+  }
+
+  .media-placeholder {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .media-copy {
+    font-size: 28px;
+    color: #f3efe8;
+  }
+
+  .media-note {
+    font: 700 11px/1 var(--font-display);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #a39a8d;
+  }
+
+  .sys-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin-top: 14px;
+  }
+
+  .sys-item {
+    min-width: 0;
+  }
+
+  .sys-key {
+    font: 700 10px/1 var(--font-display);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--panel-muted);
+  }
+
+  .sys-val {
+    margin-top: 6px;
+    font-size: 15px;
+    color: var(--panel-fg);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  #col-tasks .task-due {
-    font-size: 9px;
-    font-weight: 500;
-    flex-shrink: 0;
-    margin-left: auto;
+  .sys-updated {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--panel-muted);
   }
 
-  .urgency-today   { color: var(--warn); }
-  .urgency-overdue { color: var(--danger); }
-  .urgency-soon    { color: var(--blue); }
-  .urgency-normal  { color: var(--dim); }
-
-  /* ── Col 4: System ─────────────────────────────────────── */
-  #col-sys .img-zone {
-    width: 100%;
-    height: 112px;
-    background: linear-gradient(135deg, #0e1e30 0%, #0a1220 100%);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--dim2);
-    font-size: 9px;
-    margin-bottom: 10px;
-    flex-shrink: 0;
+  .urgency-overdue,
+  .urgency-overdue .task-due {
+    color: #d0a39b;
   }
 
-  #col-sys .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 3px 0;
-    font-size: 9px;
+  .urgency-today,
+  .urgency-today .task-due {
+    color: #d5bc8e;
   }
 
-  #col-sys .stat-key { color: var(--dim); }
-  #col-sys .stat-val { color: var(--white); font-weight: 500; }
-  #col-sys .stat-val.ok { color: var(--accent); }
-  #col-sys .stat-val.warn { color: var(--warn); }
+  .urgency-soon,
+  .urgency-soon .task-due {
+    color: #b4bec5;
+  }
 
-  /* ── Misc ──────────────────────────────────────────────── */
-  .fade { opacity: 0; transition: opacity 0.4s; }
-  .fade.visible { opacity: 1; }
+  .urgency-normal,
+  .urgency-normal .task-due {
+    color: #c9bdac;
+  }
 
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-  .blink { animation: pulse 1s step-end infinite; }
+  .done {
+    opacity: 0.48;
+  }
 </style>
 </head>
 <body>
 <div class="grid">
+  <section class="card tone-home" id="col-home">
+    <div class="panel-head">
+      <div class="panel-kicker">pibar</div>
+      <div class="panel-tag playful">desk mode</div>
+    </div>
 
-  <!-- ── Col 0: Clock ── -->
-  <div class="card" id="col-clock">
-    <div class="label">pibar</div>
-    <div class="big time" id="clock-time">--:--</div>
+    <div class="time" id="clock-time">--:--</div>
     <div class="date" id="clock-date">—</div>
-    <div class="bar"></div>
-    <div class="location" id="clock-loc">Lab · Floor 2</div>
-    <div class="uptime" id="clock-uptime"></div>
-  </div>
-
-  <!-- ── Col 1: Air Quality ── -->
-  <div class="card" id="col-aqi">
-    <div class="label">Air Quality</div>
-    <div class="big aqi-value" id="aqi-val">—</div>
-    <div class="aqi-status" id="aqi-status">—</div>
-    <div class="chart" id="aqi-chart">
-      <!-- bars injected by JS -->
+    <div class="meta-row">
+      <span class="playful" id="clock-loc">under monitor</span>
+      <span id="clock-uptime">—</span>
     </div>
-    <div class="pm25 sub" id="aqi-pm25">PM2.5  — µg/m³ &nbsp;·&nbsp; VOC  —</div>
-  </div>
 
-  <!-- ── Col 2: CO2 + Temp/Humidity ── -->
-  <div class="card" id="col-env">
-    <div class="label">CO₂</div>
-    <div class="big co2-value" id="co2-val">—</div>
-    <div class="sub" id="co2-sub">— ppm</div>
-    <div class="divider"></div>
-    <div class="label">Temp / Humidity</div>
+    <div class="mini-divider"></div>
+
+    <div class="aqi-block">
+      <div class="panel-head" style="margin-bottom: 0;">
+        <div class="section-title">Air quality</div>
+        <div class="badge" id="aqi-status">—</div>
+      </div>
+
+      <div class="aqi-row">
+        <div>
+          <div class="aqi-value" id="aqi-val">—</div>
+          <div class="aqi-caption" id="aqi-caption">PM2.5 — · VOC —</div>
+        </div>
+        <div class="chart" id="aqi-chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tone-air" id="col-air">
+    <div class="panel-head">
+      <div class="panel-kicker">room climate</div>
+      <div class="panel-tag">live</div>
+    </div>
+
+    <div class="metric-label">CO₂</div>
+    <div class="co2-value" id="co2-val">—</div>
+    <div class="metric-meta" id="co2-sub">— ppm</div>
+
+    <div class="soft-divider"></div>
+
+    <div class="metric-label">Temp</div>
     <div class="temp-value" id="temp-val">—°C</div>
-    <div class="sub" id="hum-val">Humidity —%</div>
-    <div class="sub" id="press-val">Pressure — hPa</div>
-  </div>
+    <div class="metric-meta" id="hum-val">Humidity —%</div>
+    <div class="metric-meta" id="press-val">Pressure — hPa</div>
+  </section>
 
-  <!-- ── Col 3: Tasks ── -->
-  <div class="card" id="col-tasks">
-    <div class="label">Tasks &amp; Deadlines</div>
+  <section class="card tone-notes" id="col-notes">
+    <div class="panel-head">
+      <div class="panel-kicker">reminders</div>
+      <div class="panel-tag playful">main focus</div>
+    </div>
+
+    <div class="hero-task" id="lead-task">
+      <div class="hero-kicker" id="lead-task-kicker">Next up</div>
+      <div class="hero-text" id="lead-task-text">Loading…</div>
+      <div class="hero-meta playful" id="lead-task-meta">—</div>
+    </div>
+
     <ul class="task-list" id="task-list">
-      <li style="color:var(--dim);font-size:11px;padding-top:8px">Loading…</li>
+      <li class="task-item">
+        <div class="task-dot"></div>
+        <div class="task-copy">
+          <div class="task-text">Loading…</div>
+          <div class="task-meta">Fetching reminders</div>
+        </div>
+        <div class="task-due">WAIT</div>
+      </li>
     </ul>
-  </div>
+  </section>
 
-  <!-- ── Col 4: System / Ambient ── -->
-  <div class="card" id="col-sys">
-    <div class="img-zone" id="sys-img">[ ambient ]</div>
-    <div class="stat-row">
-      <span class="stat-key">Network</span>
-      <span class="stat-val ok" id="sys-net">—</span>
+  <section class="card tone-media" id="col-media">
+    <div class="panel-head">
+      <div class="panel-kicker">ambient / media</div>
+      <div class="panel-tag playful">gif / image</div>
     </div>
-    <div class="stat-row">
-      <span class="stat-key">Pi temp</span>
-      <span class="stat-val" id="sys-temp">—</span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-key">Disk free</span>
-      <span class="stat-val" id="sys-disk">—</span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-key">Uptime</span>
-      <span class="stat-val" id="sys-uptime">—</span>
-    </div>
-    <div class="stat-row">
-      <span class="stat-key">IP</span>
-      <span class="stat-val" id="sys-ip">—</span>
-    </div>
-    <div class="divider"></div>
-    <div class="stat-row">
-      <span class="stat-key" style="font-size:8px;color:var(--dim2)" id="sys-updated">—</span>
-    </div>
-  </div>
 
+    <div class="media-frame" id="sys-img">
+      <div class="media-placeholder">
+        <div class="media-copy playful">drop a loop or still here</div>
+        <div class="media-note">bigger image zone for mood or motion</div>
+      </div>
+    </div>
+
+    <div class="sys-grid">
+      <div class="sys-item">
+        <div class="sys-key">Network</div>
+        <div class="sys-val" id="sys-net">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Pi temp</div>
+        <div class="sys-val" id="sys-temp">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Disk free</div>
+        <div class="sys-val" id="sys-disk">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Uptime</div>
+        <div class="sys-val" id="sys-uptime">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">IP</div>
+        <div class="sys-val" id="sys-ip">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Status</div>
+        <div class="sys-val playful">quiet mode</div>
+      </div>
+      <div class="sys-updated playful" id="sys-updated">—</div>
+    </div>
+  </section>
 </div>
 
 <script>
-  const API = 'http://localhost:5000/api';
+  const API = "http://localhost:5000/api";
   const POLL_MS = 6000;
 
-  // ── Clock ────────────────────────────────────────────────
-  const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   function tickClock() {
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2,'0');
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    document.getElementById('clock-time').textContent = `${hh}:${mm}`;
-    document.getElementById('clock-date').textContent =
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    document.getElementById("clock-time").textContent = `${hh}:${mm}`;
+    document.getElementById("clock-date").textContent =
       `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
   }
+
   tickClock();
   setInterval(tickClock, 1000);
 
-  // ── AQI helpers ──────────────────────────────────────────
   const AQI_LEVELS = [
-    { max: 50,  label: 'Good',       color: '#45cc94' },
-    { max: 100, label: 'Moderate',   color: '#ffb84d' },
-    { max: 150, label: 'Unhealthy*', color: '#ff8c4b' },
-    { max: 200, label: 'Unhealthy',  color: '#ff5f5f' },
-    { max: 300, label: 'Very Unhlth',color: '#c04fff' },
-    { max: Infinity, label: 'Hazardous', color: '#8b0000' },
+    { max: 50, label: "Good", color: "#dfd2c2" },
+    { max: 100, label: "Okay", color: "#cbb79d" },
+    { max: 150, label: "Watch", color: "#b89677" },
+    { max: 200, label: "Poor", color: "#9a7468" },
+    { max: Infinity, label: "Bad", color: "#8b5a54" },
   ];
 
-  function aqiLevel(v) {
-    return AQI_LEVELS.find(l => v <= l.max) || AQI_LEVELS.at(-1);
-  }
-
-  // Simulate a rolling 8-point history for the sparkbar
   const aqiHistory = [38, 41, 35, 44, 40, 37, 43, 42];
+
+  function aqiLevel(value) {
+    return AQI_LEVELS.find((level) => value <= level.max) || AQI_LEVELS[AQI_LEVELS.length - 1];
+  }
 
   function renderAqiChart(current) {
     aqiHistory.push(current);
     if (aqiHistory.length > 8) aqiHistory.shift();
+
     const max = Math.max(...aqiHistory, 10);
-    const container = document.getElementById('aqi-chart');
-    container.innerHTML = aqiHistory.map((v, i) => {
-      const pct = Math.max(8, Math.round((v / max) * 100));
-      const isCurrent = i === aqiHistory.length - 1;
-      return `<div class="bar-item${isCurrent ? ' current' : ''}" style="height:${pct}%"></div>`;
-    }).join('');
+    const container = document.getElementById("aqi-chart");
+    container.innerHTML = aqiHistory.map((value, index) => {
+      const pct = Math.max(10, Math.round((value / max) * 100));
+      const isCurrent = index === aqiHistory.length - 1;
+      return `<div class="bar-item${isCurrent ? " current" : ""}" style="height:${pct}%"></div>`;
+    }).join("");
   }
 
-  // CO2 status label
-  function co2Status(v) {
-    if (v < 800)  return { label: 'Normal', color: 'var(--accent)' };
-    if (v < 1000) return { label: 'Elevated', color: 'var(--warn)' };
-    return { label: 'High — ventilate!', color: 'var(--danger)' };
+  function co2Status(value) {
+    if (value < 800) return { label: "Normal", color: "#d8d3ca" };
+    if (value < 1000) return { label: "Elevated", color: "#cbb79d" };
+    return { label: "Ventilate", color: "#c1978d" };
   }
 
-  // ── Update sensors ───────────────────────────────────────
-  function updateSensors(s) {
-    // AQI
-    const aqi = s.aqi ?? 42;
-    const lvl = aqiLevel(aqi);
-    const aqiEl = document.getElementById('aqi-val');
-    aqiEl.textContent = aqi;
-    aqiEl.style.color = lvl.color;
-    const aqiSt = document.getElementById('aqi-status');
-    aqiSt.textContent = lvl.label;
-    aqiSt.style.color = lvl.color;
+  function updateSensors(sensors) {
+    const aqi = sensors.aqi ?? 42;
+    const level = aqiLevel(aqi);
+    const aqiValue = document.getElementById("aqi-val");
+    const aqiStatus = document.getElementById("aqi-status");
+
+    aqiValue.textContent = aqi;
+    aqiValue.style.color = level.color;
+    aqiStatus.textContent = level.label;
+    aqiStatus.style.color = level.color;
+    aqiStatus.style.borderColor = `${level.color}55`;
+
+    document.getElementById("aqi-caption").innerHTML =
+      `PM2.5 ${sensors.pm25 ?? "—"} · VOC ${sensors.voc_index ?? "—"}`;
     renderAqiChart(aqi);
 
-    document.getElementById('aqi-pm25').innerHTML =
-      `PM2.5&nbsp;&nbsp;${s.pm25 ?? '—'} µg/m³ &nbsp;·&nbsp; VOC&nbsp;&nbsp;${s.voc_index ? (s.voc_index < 150 ? 'Low' : 'Medium') : '—'}`;
+    const co2 = sensors.co2 ?? 748;
+    const co2State = co2Status(co2);
+    const co2Value = document.getElementById("co2-val");
+    co2Value.textContent = co2;
+    co2Value.style.color = co2State.color;
+    document.getElementById("co2-sub").textContent = `${co2State.label} · ppm`;
 
-    // CO2
-    const co2 = s.co2 ?? 748;
-    const cst = co2Status(co2);
-    const co2El = document.getElementById('co2-val');
-    co2El.textContent = co2;
-    co2El.style.color = cst.color;
-    document.getElementById('co2-sub').textContent = `${cst.label}  ·  ppm`;
-
-    // Temp / humidity
-    document.getElementById('temp-val').textContent = `${s.temperature ?? '—'}°C`;
-    document.getElementById('hum-val').textContent = `Humidity  ${s.humidity ?? '—'}%`;
-    document.getElementById('press-val').textContent = `Pressure  ${s.pressure ?? '—'} hPa`;
+    document.getElementById("temp-val").textContent = `${sensors.temperature ?? "—"}°C`;
+    document.getElementById("hum-val").textContent = `Humidity ${sensors.humidity ?? "—"}%`;
+    document.getElementById("press-val").textContent = `Pressure ${sensors.pressure ?? "—"} hPa`;
   }
 
-  // ── Update system ────────────────────────────────────────
-  function updateSystem(sys) {
-    document.getElementById('sys-net').textContent   = sys.connected ? 'Connected' : 'Offline';
-    document.getElementById('sys-net').className     = 'stat-val ' + (sys.connected ? 'ok' : 'warn');
-    document.getElementById('sys-ip').textContent    = sys.ip ?? '—';
-    document.getElementById('sys-disk').textContent  = `${sys.disk_free_gb ?? '—'} GB`;
-    document.getElementById('sys-uptime').textContent = sys.uptime ?? '—';
-    document.getElementById('clock-uptime').textContent = `Uptime  ${sys.uptime ?? '—'}`;
-
-    const t = sys.cpu_temp;
-    const tempEl = document.getElementById('sys-temp');
-    if (t !== null && t !== undefined) {
-      tempEl.textContent = `${t}°C`;
-      tempEl.className = 'stat-val ' + (t > 70 ? 'warn' : '');
-    } else {
-      tempEl.textContent = '—';
-    }
+  function updateSystem(system) {
+    document.getElementById("sys-net").textContent = system.connected ? "Connected" : "Offline";
+    document.getElementById("sys-temp").textContent =
+      system.cpu_temp !== null && system.cpu_temp !== undefined ? `${system.cpu_temp}°C` : "—";
+    document.getElementById("sys-disk").textContent = `${system.disk_free_gb ?? "—"} GB`;
+    document.getElementById("sys-uptime").textContent = system.uptime ?? "—";
+    document.getElementById("sys-ip").textContent = system.ip ?? "—";
+    document.getElementById("clock-uptime").textContent = system.uptime ?? "—";
   }
 
-  // ── Update tasks ─────────────────────────────────────────
-  const URGENCY_COLORS = {
-    today:   'var(--warn)',
-    overdue: 'var(--danger)',
-    soon:    'var(--blue)',
-    normal:  'var(--dim)',
+  const URGENCY_ORDER = {
+    overdue: 0,
+    today: 1,
+    soon: 2,
+    normal: 3,
   };
 
+  const URGENCY_COLORS = {
+    overdue: "#8e4b44",
+    today: "#8a6b45",
+    soon: "#5c6a74",
+    normal: "#7c7267",
+  };
+
+  function sortTasks(tasks) {
+    return [...tasks].sort((left, right) => {
+      if (left.done !== right.done) return left.done ? 1 : -1;
+      const leftRank = URGENCY_ORDER[left.urgency] ?? 99;
+      const rightRank = URGENCY_ORDER[right.urgency] ?? 99;
+      if (leftRank !== rightRank) return leftRank - rightRank;
+      const leftDays = left.days_left ?? 9999;
+      const rightDays = right.days_left ?? 9999;
+      return leftDays - rightDays;
+    });
+  }
+
+  function taskMeta(task) {
+    if (!task) return "No reminders queued";
+    if (task.done) return task.due ? `${task.due} · done` : "Done";
+    if (task.days_left === 0) return `${task.due ?? "Today"} · due now`;
+    if (task.days_left < 0) return `${task.due ?? "Overdue"} · ${Math.abs(task.days_left)}d late`;
+    if (task.days_left !== null && task.days_left !== undefined) {
+      return `${task.due ?? "Soon"} · ${task.days_left}d left`;
+    }
+    return task.due || "No due date";
+  }
+
+  function leadLabel(task) {
+    if (!task) return "All clear";
+    if (task.urgency === "overdue") return "Needs attention";
+    if (task.urgency === "today") return "Today";
+    if (task.urgency === "soon") return "Coming up";
+    if (task.done) return "Wrapped";
+    return "Next up";
+  }
+
+  function escHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function updateTasks(tasks) {
-    const list = document.getElementById('task-list');
-    if (!tasks || tasks.length === 0) {
-      list.innerHTML = '<li style="color:var(--dim);font-size:11px;padding-top:8px">No tasks</li>';
+    const list = document.getElementById("task-list");
+    const sorted = sortTasks(tasks || []);
+    const lead = sorted.find((task) => !task.done) || sorted[0];
+
+    document.getElementById("lead-task-kicker").textContent = leadLabel(lead);
+    document.getElementById("lead-task-text").textContent = lead ? lead.text : "No active reminders";
+    document.getElementById("lead-task-meta").textContent = taskMeta(lead);
+
+    if (!sorted.length) {
+      list.innerHTML = `
+        <li class="task-item">
+          <div class="task-dot"></div>
+          <div class="task-copy">
+            <div class="task-text">No reminders queued</div>
+            <div class="task-meta">tasks.md is empty</div>
+          </div>
+          <div class="task-due">CLEAR</div>
+        </li>`;
       return;
     }
-    // Show max 7 tasks to fit 480px height
-    list.innerHTML = tasks.slice(0, 7).map(t => {
-      const color = URGENCY_COLORS[t.urgency] ?? 'var(--dim)';
-      const textStyle = t.done ? 'text-decoration:line-through;opacity:0.45' : '';
+
+    const remainder = sorted.filter((task) => task !== lead).slice(0, 5);
+    list.innerHTML = remainder.map((task) => {
+      const urgency = task.urgency || "normal";
+      const color = URGENCY_COLORS[urgency] || URGENCY_COLORS.normal;
       return `
-        <li class="task-item">
-          <div class="dot" style="background:${color}"></div>
-          <span class="task-text" style="${textStyle}">${escHtml(t.text)}</span>
-          <span class="task-due urgency-${t.urgency}">${escHtml(t.due ?? '')}</span>
+        <li class="task-item urgency-${urgency}${task.done ? " done" : ""}">
+          <div class="task-dot" style="background:${color}; box-shadow:0 0 0 4px ${color}22;"></div>
+          <div class="task-copy">
+            <div class="task-text">${escHtml(task.text)}</div>
+            <div class="task-meta playful">${escHtml(taskMeta(task))}</div>
+          </div>
+          <div class="task-due">${escHtml(task.due || (task.done ? "done" : "open"))}</div>
         </li>`;
-    }).join('');
+    }).join("");
   }
 
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // ── Main poll ────────────────────────────────────────────
   async function poll() {
     try {
-      const res = await fetch(`${API}/all`);
-      if (!res.ok) throw new Error(res.status);
-      const data = await res.json();
+      const response = await fetch(`${API}/all`);
+      if (!response.ok) throw new Error(response.status);
+      const data = await response.json();
       updateSensors(data.sensors);
       updateSystem(data.system);
       updateTasks(data.tasks);
+
       const now = new Date();
-      document.getElementById('sys-updated').textContent =
-        `Last sync  ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-    } catch (e) {
-      document.getElementById('sys-updated').textContent = `Error: ${e.message}`;
+      document.getElementById("sys-updated").textContent =
+        `Last sync ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    } catch (error) {
+      document.getElementById("sys-updated").textContent = `Sync error: ${error.message}`;
     }
   }
 
