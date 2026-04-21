@@ -1,5 +1,4 @@
 from flask import Flask, jsonify, send_from_directory
-from flask_cors import CORS
 import os
 
 from sensors import get_sensors
@@ -7,7 +6,6 @@ from system_stats import get_system
 from tasks import get_tasks
 
 app = Flask(__name__, static_folder=None)
-CORS(app)
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
@@ -42,4 +40,5 @@ def api_all():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
