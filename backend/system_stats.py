@@ -1,5 +1,5 @@
-import subprocess
 import shutil
+import socket
 import time
 
 _start = time.time()
@@ -28,8 +28,9 @@ def get_system():
     disk_free_gb = round(free / 1e9, 1)
 
     try:
-        result = subprocess.check_output(["hostname", "-I"], text=True).strip()
-        ip = result.split()[0] if result else "—"
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("8.8.8.8", 80))
+            ip = sock.getsockname()[0]
         connected = True
     except:
         ip = "—"
