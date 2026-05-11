@@ -1,0 +1,14 @@
+[Unit]
+Description=pibar dashboard
+After=network.target graphical.target
+
+[Service]
+User=mypi
+WorkingDirectory=/home/mypi/pibar
+ExecStart=/bin/bash /home/mypi/pibar/run.sh
+Restart=on-failure
+RestartSec=5
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=graphical.target
