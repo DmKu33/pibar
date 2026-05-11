@@ -1,4 +1,3 @@
-import os
 import random
 import time
 
@@ -13,22 +12,22 @@ def _is_pi():
 
 ON_PI = _is_pi()
 
+_bmp = None
+
 if ON_PI:
     try:
-        import board
-        import busio
-        import adafruit_bme680
-        import adafruit_scd4x
-        _i2c = busio.I2C(board.SCL, board.SDA)
-        _bme = adafruit_bme680.Adafruit_BME680_I2C(_i2c)
-        _scd = adafruit_scd4x.SCD4X(_i2c)
-        _scd.start_periodic_measurement()
-        SENSORS_REAL = True
+        from smbus2 import SMBus
+        from bmp280 import BMP280
+        _i2c_bus = SMBus(1)
+        try:
+            _bmp = BMP280(i2c_addr=0x77, i2c_dev=_i2c_bus)
+            print("[sensors] BMP280 ready on bus 1, addr 0x77")
+        except Exception:
+            _bmp = BMP280(i2c_addr=0x76, i2c_dev=_i2c_bus)
+            print("[sensors] BMP280 ready on bus 1, addr 0x76")
     except Exception as e:
-        print(f"[sensors] {e}, falling back to mock")
-        SENSORS_REAL = False
-else:
-    SENSORS_REAL = False
+        print(f"[sensors] BMP280 init failed: {e}")
+        _bmp = None
 
 
 def _mock():
@@ -36,35 +35,24 @@ def _mock():
     return {
         "temperature": round(21.0 + 1.5 * (0.5 - abs((t % 60) / 60 - 0.5)), 1),
         "humidity": round(55 + 8 * random.uniform(-1, 1), 1),
-        "pressure": round(1013.2 + random.uniform(-0.5, 0.5), 1),
-        "voc_index": round(120 + random.randint(-20, 20)),
-        "co2": round(720 + random.randint(-40, 80)),
-        "aqi": 42,
-        "pm25": round(8 + random.uniform(-2, 2), 1),
+        "pressure": round(1013 + random.uniform(-2, 2), 1),
         "source": "mock",
     }
 
 
 def _real():
-    data = {
-        "temperature": round(_bme.temperature, 1),
-        "humidity": round(_bme.relative_humidity, 1),
-        "pressure": round(_bme.pressure, 1),
-        "voc_index": round(_bme.gas),
-        "co2": None,
-        "aqi": None,
-        "pm25": None,
+    return {
+        "temperature": round(_bmp.get_temperature(), 1),
+        "humidity": None,
+        "pressure": round(_bmp.get_pressure(), 1),
         "source": "real",
     }
-    if _scd.data_ready:
-        data["co2"] = _scd.CO2
-    return data
 
 
 def get_sensors():
-    if SENSORS_REAL:
+    if _bmp is not None:
         try:
             return _real()
         except Exception as e:
-            print(f"[sensors] {e}")
+            print(f"[sensors] read error: {e}")
     return _mock()

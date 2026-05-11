@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1280, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>pibar</title>
 <style>
   *, *::before, *::after {
@@ -19,8 +19,8 @@
   }
 
   html, body {
-    width: 1280px;
-    height: 480px;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
     background:
       radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 26%),
@@ -33,7 +33,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: 220px 200px 380px 412px;
+    grid-template-columns: 17fr 16fr 30fr 32fr;
     gap: 8px;
     padding: 10px;
     height: 100%;
@@ -524,18 +524,22 @@
 
     <div class="mini-divider"></div>
 
-    <div class="aqi-block">
-      <div class="panel-head" style="margin-bottom: 0;">
-        <div class="section-title">Air quality</div>
-        <div class="badge" id="aqi-status">—</div>
+    <div class="sys-grid">
+      <div class="sys-item">
+        <div class="sys-key">IP</div>
+        <div class="sys-val" id="sys-ip">—</div>
       </div>
-
-      <div class="aqi-row">
-        <div>
-          <div class="aqi-value" id="aqi-val">—</div>
-          <div class="aqi-caption" id="aqi-caption">PM2.5 — · VOC —</div>
-        </div>
-        <div class="chart" id="aqi-chart"></div>
+      <div class="sys-item">
+        <div class="sys-key">Pi temp</div>
+        <div class="sys-val" id="sys-temp">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Disk free</div>
+        <div class="sys-val" id="sys-disk">—</div>
+      </div>
+      <div class="sys-item">
+        <div class="sys-key">Uptime</div>
+        <div class="sys-val" id="sys-uptime">—</div>
       </div>
     </div>
   </section>
@@ -546,16 +550,14 @@
       <div class="panel-tag">live</div>
     </div>
 
-    <div class="metric-label">CO₂</div>
-    <div class="co2-value" id="co2-val">—</div>
-    <div class="metric-meta" id="co2-sub">— ppm</div>
+    <div class="metric-label">Temperature</div>
+    <div class="temp-value" id="temp-val">—°C</div>
 
     <div class="soft-divider"></div>
 
-    <div class="metric-label">Temp</div>
-    <div class="temp-value" id="temp-val">—°C</div>
-    <div class="metric-meta" id="hum-val">Humidity —%</div>
-    <div class="metric-meta" id="press-val">Pressure — hPa</div>
+    <div class="metric-label">Pressure</div>
+    <div class="temp-value" id="press-val">— hPa</div>
+    <div class="metric-meta" id="sensor-source"></div>
   </section>
 
   <section class="card tone-notes" id="col-notes">
@@ -584,44 +586,15 @@
 
   <section class="card tone-media" id="col-media">
     <div class="panel-head">
-      <div class="panel-kicker">ambient / media</div>
-      <div class="panel-tag playful">gif / image</div>
+      <div class="panel-kicker">system</div>
+      <div class="panel-tag" id="sys-net">—</div>
     </div>
 
     <div class="media-frame" id="sys-img">
-      <div class="media-placeholder">
-        <div class="media-copy playful">drop a loop or still here</div>
-        <div class="media-note">bigger image zone for mood or motion</div>
-      </div>
+      <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80&auto=format&fit=crop" alt="" style="width:100%;height:100%;object-fit:cover;opacity:0.7;border-radius:10px;">
     </div>
 
-    <div class="sys-grid">
-      <div class="sys-item">
-        <div class="sys-key">Network</div>
-        <div class="sys-val" id="sys-net">—</div>
-      </div>
-      <div class="sys-item">
-        <div class="sys-key">Pi temp</div>
-        <div class="sys-val" id="sys-temp">—</div>
-      </div>
-      <div class="sys-item">
-        <div class="sys-key">Disk free</div>
-        <div class="sys-val" id="sys-disk">—</div>
-      </div>
-      <div class="sys-item">
-        <div class="sys-key">Uptime</div>
-        <div class="sys-val" id="sys-uptime">—</div>
-      </div>
-      <div class="sys-item">
-        <div class="sys-key">IP</div>
-        <div class="sys-val" id="sys-ip">—</div>
-      </div>
-      <div class="sys-item">
-        <div class="sys-key">Status</div>
-        <div class="sys-val playful">quiet mode</div>
-      </div>
-      <div class="sys-updated playful" id="sys-updated">—</div>
-    </div>
+    <div class="sys-updated playful" id="sys-updated">—</div>
   </section>
 </div>
 
@@ -644,69 +617,14 @@
   tickClock();
   setInterval(tickClock, 1000);
 
-  const AQI_LEVELS = [
-    { max: 50, label: "Good", color: "#dfd2c2" },
-    { max: 100, label: "Okay", color: "#cbb79d" },
-    { max: 150, label: "Watch", color: "#b89677" },
-    { max: 200, label: "Poor", color: "#9a7468" },
-    { max: Infinity, label: "Bad", color: "#8b5a54" },
-  ];
-
-  const aqiHistory = [38, 41, 35, 44, 40, 37, 43, 42];
-
-  function aqiLevel(value) {
-    return AQI_LEVELS.find((level) => value <= level.max) || AQI_LEVELS[AQI_LEVELS.length - 1];
-  }
-
-  function renderAqiChart(current) {
-    aqiHistory.push(current);
-    if (aqiHistory.length > 8) aqiHistory.shift();
-
-    const max = Math.max(...aqiHistory, 10);
-    const container = document.getElementById("aqi-chart");
-    container.innerHTML = aqiHistory.map((value, index) => {
-      const pct = Math.max(10, Math.round((value / max) * 100));
-      const isCurrent = index === aqiHistory.length - 1;
-      return `<div class="bar-item${isCurrent ? " current" : ""}" style="height:${pct}%"></div>`;
-    }).join("");
-  }
-
-  function co2Status(value) {
-    if (value < 800) return { label: "Normal", color: "#d8d3ca" };
-    if (value < 1000) return { label: "Elevated", color: "#cbb79d" };
-    return { label: "Ventilate", color: "#c1978d" };
-  }
-
   function updateSensors(sensors) {
-    const aqi = sensors.aqi ?? 42;
-    const level = aqiLevel(aqi);
-    const aqiValue = document.getElementById("aqi-val");
-    const aqiStatus = document.getElementById("aqi-status");
-
-    aqiValue.textContent = aqi;
-    aqiValue.style.color = level.color;
-    aqiStatus.textContent = level.label;
-    aqiStatus.style.color = level.color;
-    aqiStatus.style.borderColor = `${level.color}55`;
-
-    document.getElementById("aqi-caption").innerHTML =
-      `PM2.5 ${sensors.pm25 ?? "—"} · VOC ${sensors.voc_index ?? "—"}`;
-    renderAqiChart(aqi);
-
-    const co2 = sensors.co2 ?? 748;
-    const co2State = co2Status(co2);
-    const co2Value = document.getElementById("co2-val");
-    co2Value.textContent = co2;
-    co2Value.style.color = co2State.color;
-    document.getElementById("co2-sub").textContent = `${co2State.label} · ppm`;
-
     document.getElementById("temp-val").textContent = `${sensors.temperature ?? "—"}°C`;
-    document.getElementById("hum-val").textContent = `Humidity ${sensors.humidity ?? "—"}%`;
-    document.getElementById("press-val").textContent = `Pressure ${sensors.pressure ?? "—"} hPa`;
+    document.getElementById("press-val").textContent = `${sensors.pressure ?? "—"} hPa`;
+    document.getElementById("sensor-source").textContent = sensors.source === "real" ? "bmp280 live" : "mock data";
   }
 
   function updateSystem(system) {
-    document.getElementById("sys-net").textContent = system.connected ? "Connected" : "Offline";
+    document.getElementById("sys-net").textContent = system.connected ? "online" : "offline";
     document.getElementById("sys-temp").textContent =
       system.cpu_temp !== null && system.cpu_temp !== undefined ? `${system.cpu_temp}°C` : "—";
     document.getElementById("sys-disk").textContent = `${system.disk_free_gb ?? "—"} GB`;
